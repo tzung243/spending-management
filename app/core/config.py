@@ -20,6 +20,9 @@ class Settings(BaseSettings):
             SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{values['DB_USER']}:{values['DB_PASSWORD']}@{values['DB_HOST']}:{values['DB_PORT']}/{values['DB_NAME']}"
         return SQLALCHEMY_DATABASE_URL
 
+    SECURITY_ALGORITHM: Optional[str] = "HS256"
+    SECRET_KEY: str
+
     class Config:
         env_file = f'.env.{os.getenv("ENV")}' if os.getenv("ENV") else ".env"
 

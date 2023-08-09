@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 
 from app.database import Base
 
@@ -7,7 +7,7 @@ class Users(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False)
-    password = Column(String(50), nullable=False)
+    password = Column(String(255), nullable=False)
     email = Column(String(50), unique=True, nullable=False)
 
 
@@ -18,8 +18,15 @@ class Wallets(Base):
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    type = Column(String(50), nullable=False)
+    type = Column(Integer, nullable=False)
     amount = Column(Integer, nullable=False)
+
+
+class TransactionLabels(Base):
+    __tablename__ = "transaction_labels"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    label_name = Column(String(50), nullable=False)
 
 
 class Transactions(Base):
@@ -33,12 +40,16 @@ class Transactions(Base):
     )
     type = Column(String(50), nullable=False)
     amount = Column(Integer, nullable=False)
-    description = Column(String(50), nullable=False)
-    date = Column(String(50), nullable=False)
-    type = Column(String(50), nullable=False)
+    description = Column(String(50))
+    date = Column(DateTime, nullable=False)
+    label = Column(
+        Integer,
+        ForeignKey("transaction_labels.id", ondelete="CASCADE"),
+        nullable=True,
+    )
 
 
-class Activity_logs(Base):
+class ActivityLogs(Base):
     __tablename__ = "activity_logs"
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(

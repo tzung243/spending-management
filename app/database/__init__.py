@@ -1,17 +1,12 @@
-import os
-import re
 from datetime import datetime, date
-
-# import logging
-from sqlalchemy import MetaData
-from sqlalchemy import create_engine
+import re
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr, declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 convention = {
     "ix": "ix_%(column_0_label)s",

@@ -1,15 +1,17 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Request
 
 from app.core.config import settings
 
-
 app = FastAPI()
 
-from app.apis import user
+from app.apis import user, wallet, transaction_label, transaction
 
 app.include_router(user.router)
+app.include_router(wallet.router)
+app.include_router(transaction_label.router)
+app.include_router(transaction.router)
 
 
 @app.get("/")
 async def root():
-    return "Hello World"
+    return {"message": "Welcome to my app"}
