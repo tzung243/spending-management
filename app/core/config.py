@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     SECURITY_ALGORITHM: Optional[str] = "HS256"
     SECRET_KEY: str
 
+    MAIL_ADMIN: Optional[str] = None
+    MAIL_PASSWORD: str
+    MAIL_PORT: Optional[int] = 585
+    MAIL_SERVER: Optional[str]= "smtp.gmail.com",
+
     class Config:
         env_file = f'.env.{os.getenv("ENV")}' if os.getenv("ENV") else ".env"
 

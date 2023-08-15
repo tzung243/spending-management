@@ -26,6 +26,8 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=50), nullable=False),
         sa.Column("password", sa.String(length=255), nullable=False),
         sa.Column("email", sa.String(length=50), nullable=False),
+        sa.Column("token", sa.String(length=255), nullable=True),
+        sa.Column("is_verified", sa.Boolean(), server_default='0',nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_users")),
         sa.UniqueConstraint("email", name=op.f("uq_users_email")),
         sa.UniqueConstraint("name", name=op.f("uq_users_name")),

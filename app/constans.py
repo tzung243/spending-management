@@ -21,3 +21,7 @@ class TransactionLabel:
     RENT: int = 5
     SALARY: int = 6
     TRANSFER: int = 7
+
+class StaticsType:
+    DAYS = 1
+    MONTH = 2

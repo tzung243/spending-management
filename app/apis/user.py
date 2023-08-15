@@ -1,7 +1,7 @@
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.servises.user import is_valid_password
+from app.servises.user import register_user
 from app.database import get_db
 from app.database.models import Users as DBUsers
 from app.schema.user import UserCreate, UserLogin
@@ -27,20 +27,8 @@ def register(
     request: UserCreate,
     db: Session = Depends(get_db),
 ):
-    db_user = db.query(DBUsers).filter(DBUsers.name == request.name).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Username already exists")
-    valid_password = is_valid_password(request.password, request.name)
-    if valid_password is not None:
-        raise HTTPException(status_code=400, detail=valid_password)
-    # Adding the salt to password
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(request.password.encode("utf-8"), salt)
-    user = DBUsers(name=request.name, email=request.email, password=hashed_password)
-    db.add(user)
-    db.commit()
-    return {"message": "User created successfully"}
-
+    response = register_user(request, db)
+    return "Success"
 
 @router.post("/login")
 def signin(request: UserLogin, db: Session = Depends(get_db)):
@@ -55,6 +43,8 @@ def signin(request: UserLogin, db: Session = Depends(get_db)):
         user = db.query(DBUsers).filter(DBUsers.email == request.email).first()
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    if not user.is_verified:
+        raise HTTPException(status_code= 403, detail= "User not verified.")
     if not bcrypt.checkpw(
         request.password.encode("utf-8"), user.password.encode("utf-8")
     ):
@@ -74,3 +64,17 @@ def delere_data_user(
     db.execute(query, {"user_id": user_info["user_id"]})
     db.commit()
     return {"message": "Success"}
+
+
+# Route for email verification
+@router.get("/verify/{email}/{token}")
+async def verify_email(email: str, token: str, db: Session = Depends(get_db)):
+    user = db.query(DBUsers).filter(DBUsers.email == email and DBUsers.token == token).first()
+    # Check if the email and token match the stored verification token
+    if user:
+        user.is_verified = True
+        db.commit()
+        return {"message": "Email verified successfully."}
+    else:
+        # Email and token do not match
+        raise HTTPException(status_code=400, detail="Invalid email or token.")

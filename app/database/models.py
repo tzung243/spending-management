@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean
 
 from app.database import Base
 
@@ -9,6 +9,8 @@ class Users(Base):
     name = Column(String(50), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     email = Column(String(50), unique=True, nullable=False)
+    token = Column(String(255), nullable=True)
+    is_verified = Column(Boolean, nullable=False, default=False)
 
 
 class Wallets(Base):
