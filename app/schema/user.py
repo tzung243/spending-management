@@ -12,3 +12,13 @@ class UserLogin(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     password: str
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+
+
+class PasswordUpdate(BaseModel):
+    old_password: str
+    new_password: str

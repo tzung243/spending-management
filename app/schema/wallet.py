@@ -10,7 +10,6 @@ class WalletCreate(BaseModel):
 
 
 class WalletUpdate(BaseModel):
-    id: int
     name: Optional[str] = None
     type: Optional[int] = None
     amount: Optional[int] = None

@@ -8,11 +8,10 @@ class TransactionCreate(BaseModel):
     type: int
     description: Optional[str] = None
     date: str
-    label: Optional[int] = None
+    label_id: Optional[int] = None
 
 
 class TransactionUpdate(BaseModel):
-    id: int
     wallet_id: Optional[int] = None
     amount: Optional[int] = 0
     type: Optional[int] = None
@@ -28,3 +27,13 @@ class TranferWallet(BaseModel):
     date: str
     description: Optional[str] = None
     fee: Optional[int] = 0
+
+
+class TransactionInfo(BaseModel):
+    id: int
+    type: int
+    amount: int
+    description: Optional[str] = None
+    date: str
+    label_name: str
+    wallet_name: str

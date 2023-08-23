@@ -1,10 +1,12 @@
+from datetime import datetime
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from app.servises.user import is_valid_password
 from app.database import get_db
 from app.database.models import Users as DBUsers
-from app.schema.user import UserCreate, UserLogin
+from app.schema.user import PasswordUpdate, UserCreate, UserLogin, UserUpdate
 from app.security import generate_token
 from app.security import get_user, validate_token
 
@@ -30,6 +32,9 @@ def register(
     db_user = db.query(DBUsers).filter(DBUsers.name == request.name).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already exists")
+    db_user = db.query(DBUsers).filter(DBUsers.email == request.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already exists")
     valid_password = is_valid_password(request.password, request.name)
     if valid_password is not None:
         raise HTTPException(status_code=400, detail=valid_password)
@@ -58,12 +63,18 @@ def signin(request: UserLogin, db: Session = Depends(get_db)):
     if not bcrypt.checkpw(
         request.password.encode("utf-8"), user.password.encode("utf-8")
     ):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-    return {"message": "Success", "token": generate_token(user.name, user.id)}
+        raise HTTPException(status_code=422, detail="Invalid email or password")
+    return {
+        "message": "Success",
+        "access_token": generate_token(user.name, user.id),
+        "user": {"name": user.name, "email": user.email},
+        "expires_in": 24 * 3,
+        "token_created": datetime.now(),
+    }
 
 
 @router.delete("/data", dependencies=[Depends(validate_token)])
-def delere_data_user(
+def delete_data_user(
     user_info: dict = Depends(get_user),
     db: Session = Depends(get_db),
 ):
@@ -74,3 +85,60 @@ def delere_data_user(
     db.execute(query, {"user_id": user_info["user_id"]})
     db.commit()
     return {"message": "Success"}
+
+
+@router.put("/", dependencies=[Depends(validate_token)])
+def update_user(
+    request: UserUpdate,
+    user_info: dict = Depends(get_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(DBUsers).filter(DBUsers.name == user_info["user_name"]).first()
+    if user is None:
+        raise HTTPException(status_code=400, detail="User not found")
+    if request.name == user.name and request.email == user.email:
+        raise HTTPException(status_code=400, detail="No changes")
+    name_exited = (
+        db.query(DBUsers)
+        .filter(and_(DBUsers.name == request.name, DBUsers.id != user.id))
+        .first()
+    )
+    if name_exited:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    mail_exited = (
+        db.query(DBUsers)
+        .filter(and_(DBUsers.email == request.email, DBUsers.id != user.id))
+        .first()
+    )
+    if mail_exited:
+        raise HTTPException(status_code=400, detail="Email already exists")
+    user.name = request.name
+    user.email = request.email
+    db.commit()
+    return {"user": {"name": user.name, "email": user.email}}
+
+
+@router.put("/password", dependencies=[Depends(validate_token)])
+def change_password(
+    request: PasswordUpdate,
+    user_info: dict = Depends(get_user),
+    db: Session = Depends(get_db),
+):
+    print(user_info)
+    user = db.query(DBUsers).filter(DBUsers.name == user_info["user_name"]).first()
+    if user is None:
+        raise HTTPException(status_code=400, detail="User not found")
+    if not bcrypt.checkpw(
+        request.old_password.encode("utf-8"), user.password.encode("utf-8")
+    ):
+        raise HTTPException(status_code=422, detail="password_mismatch")
+    if request.old_password == request.new_password:
+        raise HTTPException(status_code=422, detail="old_password")
+    valid_password = is_valid_password(request.new_password, user.name)
+    if valid_password is not None:
+        raise HTTPException(status_code=400, detail=valid_password)
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(request.new_password.encode("utf-8"), salt)
+    user.password = hashed_password
+    db.commit()
+    return {"message": "Password updated successfully"}
